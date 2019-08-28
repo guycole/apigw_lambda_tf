@@ -36,7 +36,6 @@ def handler(event, context):
       "body": json.dumps("byte me")
     }
 
-
 if __name__ == "__main__":
     print("main")
     driver()

@@ -7,14 +7,40 @@ resource "aws_api_gateway_resource" "ping_resource" {
   path_part = "ping"
 }
 
+#######################
+# Method Request
+#######################
+
+resource "aws_api_gateway_request_validator" "ping_validator" {
+  name = "ping validator"
+  rest_api_id = "${aws_api_gateway_rest_api.gw_api.id}"
+  validate_request_body = true
+  validate_request_parameters = true
+}
+
 resource "aws_api_gateway_method" "ping_get" {
   rest_api_id = "${aws_api_gateway_rest_api.gw_api.id}"
   resource_id = "${aws_api_gateway_resource.ping_resource.id}"
-  http_method   = "GET"
+  http_method = "GET"
   authorization = "NONE"
 }
 
-resource "aws_api_gateway_integration" "ping_integration" {
+resource "aws_api_gateway_method" "ping_post" {
+  rest_api_id = "${aws_api_gateway_rest_api.gw_api.id}"
+  resource_id = "${aws_api_gateway_resource.ping_resource.id}"
+  http_method = "POST"
+  authorization = "NONE"
+
+  request_models = {"application/json" = "PingRequest"}
+  request_validator_id = "${aws_api_gateway_request_validator.ping_validator.id}"
+  depends_on = ["aws_api_gateway_model.ping_request_model"]
+}
+
+#######################
+# Integration Request
+#######################
+
+resource "aws_api_gateway_integration" "ping_get_integration" {
   rest_api_id = "${aws_api_gateway_rest_api.gw_api.id}"
   resource_id = "${aws_api_gateway_method.ping_get.resource_id}"
   http_method = "${aws_api_gateway_method.ping_get.http_method}"
@@ -23,9 +49,55 @@ resource "aws_api_gateway_integration" "ping_integration" {
   uri = "${aws_lambda_function.ping_lambda.invoke_arn}"
 }
 
+resource "aws_api_gateway_integration" "ping_post_integration" {
+  rest_api_id = "${aws_api_gateway_rest_api.gw_api.id}"
+  resource_id = "${aws_api_gateway_method.ping_post.resource_id}"
+  http_method = "${aws_api_gateway_method.ping_post.http_method}"
+  type = "MOCK"
+  #    type = "AWS_PROXY"
+  integration_http_method = "POST"
+  uri = "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/${aws_lambda_function.ping_lambda.arn}/invocations"
+}
+
+#######################
+# Method Response
+#######################
+
+resource "aws_api_gateway_method_response" "response_200" {
+  rest_api_id = "${aws_api_gateway_rest_api.gw_api.id}"
+  resource_id = "${aws_api_gateway_resource.ping_resource.id}"
+  http_method = "${aws_api_gateway_method.ping_post.http_method}"
+  status_code = "200"
+
+  response_models = {"application/json" = "Empty"}
+}
+
+resource "aws_api_gateway_integration_response" "ping_integration_response2" {
+  rest_api_id = "${aws_api_gateway_rest_api.gw_api.id}"
+  resource_id = "${aws_api_gateway_resource.ping_resource.id}"
+  http_method = "${aws_api_gateway_method.ping_post.http_method}"
+  status_code = "${aws_api_gateway_method_response.response_200.status_code}"
+
+#  response_templates = {
+#    "application/json" = <<EOF
+##set($inputRoot = $input.path('$'))
+#{
+#  "preamble" : {
+#    "transactionUuid" : "foo",
+#    "messageVersion" : 42,
+#    "messageType" : "foo"
+#  },
+#  "pingState" : true
+#}
+#EOF
+#  }
+}
+
+#######
+
 resource "aws_api_gateway_deployment" "gw_deploy" {
   depends_on = [
-    "aws_api_gateway_integration.ping_integration"
+    "aws_api_gateway_integration.ping_get_integration"
   ]
 
   rest_api_id = "${aws_api_gateway_rest_api.gw_api.id}"
