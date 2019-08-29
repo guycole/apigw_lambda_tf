@@ -1,0 +1,75 @@
+swagger: '2.0'
+
+info:
+  description: Ticket Management API
+  version: '1'
+  title: Jaded Traveler
+
+basePath: /v01
+
+schemes:
+  - https
+  - http
+
+x-amazon-apigateway-request-validators:
+  full:
+    validateRequestBody: true
+    validateRequestParameters: true
+
+x-amazon-apigateway-request-validator: "full"
+
+paths:
+  /ping:
+    post:
+      description: description xxx
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/PingRequest'
+      responses:
+        '200':
+          description: success
+
+      type: aws
+
+      x-amazon-apigateway-integration:
+        uri: '${post_lambda_arn}'
+        passthroughBehavior: never
+        httpMethod: POST
+        requestParameters: body
+        requestTemplates:
+          application/json: >-
+            #set($inputRoot = $input.path('$')) { "preamble": { "messageType"   
+            : "PING", "messageVersion" : 1, "transactionUuid":
+            "$inputRoot.preamble.transactionUuid", "deployStage"    :
+            "$context.stage", "ipAddress"      : "$context.identity.sourceIp",
+            "resourcePath"   : "$context.resourcePath" } }
+
+definitions:
+  PreambleRequest:
+    type: object
+    required:
+      - messageType
+      - transactionUuid
+    properties:
+      messageType:
+        type: string
+      transactionUuid:
+        type: string
+        format: uuid
+  PingRequest:
+    type: object
+    required:
+      - preamble
+      - pingState
+    properties:
+      preamble:
+        $ref: '#/definitions/PreambleRequest'
+      pingState:
+        type: boolean
