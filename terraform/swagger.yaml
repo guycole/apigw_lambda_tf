@@ -1,75 +1,61 @@
 swagger: '2.0'
 
 info:
-  description: Ticket Management API
   version: '1'
-  title: Jaded Traveler
+  title: Ping Demo
+  description: description1
 
-basePath: /v01
+host: braingang.net
+
+basePath: /pingdemo/v1
 
 schemes:
-  - https
   - http
-
-x-amazon-apigateway-request-validators:
-  full:
-    validateRequestBody: true
-    validateRequestParameters: true
-
-x-amazon-apigateway-request-validator: "full"
+  - https
 
 paths:
-  /ping:
-    post:
-      description: description xxx
+  /pings:
+    get:
+      summary: list all pings
       consumes:
         - application/json
       produces:
         - application/json
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            $ref: '#/definitions/PingRequest'
       responses:
-        '200':
-          description: success
-
-      type: aws
-
-      x-amazon-apigateway-integration:
-        uri: '${post_lambda_arn}'
-        passthroughBehavior: never
-        httpMethod: POST
-        requestParameters: body
-        requestTemplates:
-          application/json: >-
-            #set($inputRoot = $input.path('$')) { "preamble": { "messageType"   
-            : "PING", "messageVersion" : 1, "transactionUuid":
-            "$inputRoot.preamble.transactionUuid", "deployStage"    :
-            "$context.stage", "ipAddress"      : "$context.identity.sourceIp",
-            "resourcePath"   : "$context.resourcePath" } }
+        200:
+          description: happy happy
+          schema:
+            $ref: "#/definitions/Pings"
+            
+  /ping/{pingId}:
+    get:
+      summary: specific ping
+      consumes:
+        - application/json
+      produces:
+        - application/json      
+      parameters:
+        - in: path
+          name: pingId
+          type: string
+          required: true
+          description: ping id
+      responses:
+        200:
+          description: happy happy
 
 definitions:
-  PreambleRequest:
-    type: object
+  Ping:
     required:
-      - messageType
-      - transactionUuid
+      - id
+      - flag
     properties:
-      messageType:
-        type: string
-      transactionUuid:
+      id:
         type: string
         format: uuid
-  PingRequest:
-    type: object
-    required:
-      - preamble
-      - pingState
-    properties:
-      preamble:
-        $ref: '#/definitions/PreambleRequest'
-      pingState:
+      flag:
         type: boolean
+  Pings:
+    type: array
+    items:
+      $ref: "#/definitions/Ping"
