@@ -3,14 +3,14 @@
 #
 resource "aws_api_gateway_model" "ping_request_model" {
   rest_api_id  = "${aws_api_gateway_rest_api.gw_api.id}"
-  name = "PingRequest"
+  name = "PingRequestV1"
   description  = "ping request model"
   content_type = "application/json"
 
   schema = <<EOF
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "PingRequest",
+  "title": "PingRequestV1",
   "type": "object",
   "properties": {
     "preamble": {
@@ -41,14 +41,14 @@ EOF
 
 resource "aws_api_gateway_model" "ping_response_model" {
   rest_api_id  = "${aws_api_gateway_rest_api.gw_api.id}"
-  name = "PingResponse"
+  name = "PingResponseV1"
   description  = "ping response model"
   content_type = "application/json"
 
   schema = <<EOF
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "PingResponse",
+  "title": "PingResponseV1",
   "type": "object",
   "properties": {
     "preamble": {
@@ -60,11 +60,11 @@ resource "aws_api_gateway_model" "ping_response_model" {
           "format": "uuid"
         },
         "messageVersion": {
-          "description": "defined by URL",
+          "description": "message schema version",
           "type": "integer"
         },
         "messageType": {
-          "description": "defined by URL",
+          "description": "message type, always PING",
           "type": "string"
         }
       },
@@ -76,4 +76,3 @@ resource "aws_api_gateway_model" "ping_response_model" {
 }
 EOF
 }
-

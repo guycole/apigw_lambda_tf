@@ -20,7 +20,6 @@ resource "aws_iam_role" "ping_role" {
 EOF
 }
 
-
 resource "aws_lambda_function" "ping_lambda" {
   s3_bucket = "lambda.braingang.net"
   s3_key = "ping-v01.zip"
