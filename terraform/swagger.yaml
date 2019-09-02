@@ -9,6 +9,7 @@ basePath: "/v01"
 
 schemes:
 - "http"
+- "https"
 
 paths:
   /:
@@ -40,8 +41,6 @@ paths:
 
   /ping:
     post:
-      operationId: "CreatePing"
-
       consumes:
       - "application/json"
       produces:
@@ -55,8 +54,8 @@ paths:
           $ref: "#/definitions/PingRequestV1"
 
       responses:
-        200:
-          description: "200 response"
+        201:
+          description: "201 response"
           schema:
             $ref: "#/definitions/PingResponseV1"
           headers:
@@ -70,45 +69,72 @@ paths:
 
         responses:
           default:
-            statusCode: "200"
+            statusCode: "201"
             responseParameters:
               method.response.header.Access-Control-Allow-Origin: "'*'"
+            responseTemplates:
+              application/json: "#set($inputRoot = $input.path('$'))\n \
+                {\n  \"preamble\" : {\n \
+                \"transactionUuid\" : \"$inputRoot.transactionUuid\",\n  \
+                \"messageVersion\" : 1,\n \
+                \"messageType\" : \"PING\"\n  },\n \
+                \"pingState\" : $inputRoot.pingState\n}\n"
 
         requestTemplates:
           application/json: "#set($inputRoot = $input.path('$'))\n \
                 {\n  \"preamble\" : {\n \
-                       \"transactionUuid\" : \"foo\",\n  \
-                       \"messageVersion\" : 42,\n \
-                       \"messageType\" : \"foo\"\n  },\n \
-                \"pingState\" : true\n}"
+                       \"transactionUuid\" : \"$inputRoot.preamble.transactionUuid\",\n  \
+                       \"messageVersion\" : 1,\n \
+                       \"messageVerb\" : \"POST\",\n \
+                       \"messageType\" : \"PING\"\n  },\n \
+                \"pingState\" : $inputRoot.pingState\n}"
 
         passthroughBehavior: "never"
         httpMethod: "POST"
         type: "aws"
 
-  ###########
+  /ping/{transactionUuid}:
     get:
-      consumes:
-      - "application/json"
       produces:
       - "application/json"
+
+      parameters:
+      - name: "transactionUuid"
+        in: "path"
+        required: true
+        type: "string"
+
       responses:
         200:
           description: "200 response"
           schema:
             $ref: "#/definitions/PingResponseV1"
-        400:
-          description: "400 response"
-          schema:
-            $ref: "#/definitions/PingResponseV1"
+          headers:
+            Access-Control-Allow-Origin:
+              type: "string"
+
       x-amazon-apigateway-integration:
-        uri: "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:238461155224:function:ping_handler/invocations"
+        uri: "${ping_lambda_arn}"
+
+        responses:
+          default:
+            statusCode: "200"
+
+            responseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+
         requestTemplates:
-          application/json: "{\n  \"statusCode\": 200\n}\n"
-        passthroughBehavior: "when_no_match"
+          application/json: "#set($inputRoot = $input.path('$'))\n \
+            {\n  \"preamble\" : {\n \
+              \"transactionUuid\" : \"$inputRoot.transactionUuid\",\n  \
+              \"messageVersion\" : 1,\n \
+              \"messageType\" : \"PING\"\n  },\n \
+              \"pingState\" : true\n}\n"
+
+        passthroughBehavior: "never"
         httpMethod: "POST"
-        timeoutInMillis: 29000
-        type: "aws_proxy"
+        type: "aws"
+
 definitions:
   PingResponseV1:
     type: "object"

@@ -12,6 +12,6 @@ AWS_PROFILE=gsc_braingang
 AWS_BUCKET=lambda.braingang.net
 #
 rm -f ping-v01.zip
-zip ping-v01.zip ping_v01.py app/*.py
+zip ping-v01.zip ping_v01.py
 aws s3 cp ping-v01.zip s3://$AWS_BUCKET --profile $AWS_PROFILE
 #
